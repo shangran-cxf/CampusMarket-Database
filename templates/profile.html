@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% block title %}我的{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>👤 我的</h2>
+    <p class="subtitle">{{ user.nickname }} · {{ user.user_id }}</p>
+</div>
+
+<!-- 头像区域 -->
+<div style="display:flex;align-items:center;gap:20px;margin-bottom:28px;" class="card">
+    {% if user.avatar %}
+    <img src="{{ user.avatar }}" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:3px solid var(--border);">
+    {% else %}
+    <div style="width:72px;height:72px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-size:36px;color:#fff;">👤</div>
+    {% endif %}
+    <div>
+        <div style="font-size:18px;font-weight:700;">{{ user.nickname }}</div>
+        <div style="font-size:13px;color:var(--text-tertiary);">{{ user.user_id }}</div>
+        <form method="POST" action="{{ url_for('upload_avatar') }}" enctype="multipart/form-data" style="margin-top:8px;display:flex;gap:8px;align-items:center;">
+            <input type="file" name="avatar" accept="image/*" style="font-size:12px;" onchange="this.form.submit()">
+            <span style="font-size:11px;color:var(--text-tertiary);">选择图片自动上传</span>
+        </form>
+    </div>
+</div>
+
+<!-- 信息卡片 -->
+<div class="profile-grid">
+    <div class="profile-stat">
+        <div class="p-icon" style="background:var(--accent-bg);">🏫</div>
+        <div class="p-value" style="font-size:16px;">{{ user.school or '武汉理工大学' }}</div>
+        <div class="p-label">学校</div>
+    </div>
+    <div class="profile-stat">
+        <div class="p-icon" style="background:var(--orange-bg);">
+            {% set emoji = {"小学生":"🎒","初中生":"📚","高中生":"✏️","大学生":"🎓","研究生":"🔬","博士":"🧑‍🔬"} %}
+            {{ emoji.get(user.level, '⭐') }}
+        </div>
+        <div class="p-value">{{ user.level }}</div>
+        <div class="p-label">等级</div>
+    </div>
+    <div class="profile-stat">
+        <div class="p-icon" style="background:var(--red-bg);">XP</div>
+        <div class="p-value">{{ user.exp }}</div>
+        <div class="p-label">经验值</div>
+        <div class="level-bar"><div class="level-fill" style="width:{{ (progress*100)|int }}%;"></div></div>
+        <div style="font-size:11px;color:var(--text-tertiary);margin-top:6px;">距「{{ next_level }}」还需经验</div>
+    </div>
+    <div class="profile-stat">
+        <div class="p-icon" style="background:var(--green-bg);">🧧</div>
+        <div class="p-value">¥{{ "%.0f"|format(user.red_balance or 0) }}</div>
+        <div class="p-label">红包余额</div>
+    </div>
+</div>
+
+<div class="divider"></div>
+
+<!-- 我的帖子 -->
+<div class="section-header default">📝 我的帖子</div>
+{% if my_posts %}
+{% for p in my_posts %}
+<div class="card" data-post-id="{{ p.post_id }}">
+    <div class="card-title">{{ p.title }}{% if p.status == '已结束' %}<span class="status-tag status-ended">已结束</span>{% endif %}</div>
+    {% if p.content %}<div class="card-body">{{ p.content }}</div>{% endif %}
+    <div class="card-footer">
+        <span>📁 {{ p.section_name }}</span>
+        <span>👁 {{ p.view_count }}</span>
+        <span>👍 {{ p.like_count }}</span>
+        <span>💬 {{ p.comment_count }}</span>
+        <span>🕐 {{ p.pub_time.strftime('%m-%d %H:%M') if p.pub_time else '' }}</span>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state"><div class="empty-icon">📝</div><div class="empty-text">暂无发帖</div></div>
+{% endif %}
+{% endblock %}

@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+{% block title %}消息{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>💬 消息</h2>
+</div>
+
+<div class="tab-nav">
+    <span class="tab-item active" data-tab="replyTab">💬 回复我的</span>
+    <span class="tab-item" data-tab="recvLikeTab">👍 收到的赞</span>
+    <span class="tab-item" data-tab="myLikeTab">❤️ 我的点赞</span>
+    <span class="tab-item" data-tab="favTab">⭐ 我的码住</span>
+    <span class="tab-item" data-tab="rptTab">🚩 举报反馈</span>
+</div>
+
+<!-- 回复我的 -->
+<div id="replyTab" class="tab-panel">
+    {% if replies %}
+    {% for r in replies %}
+    <div class="card" data-post-id="{{ r.post_id }}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+            <span style="font-weight:600;font-size:14px;">{{ r.commenter }}</span>
+            <span style="font-size:12px;color:var(--text-tertiary);">回复了你的帖子</span>
+        </div>
+        <div class="card-title" style="font-size:13px;color:var(--text-secondary);padding-right:0;margin-bottom:4px;">
+            「{{ r.post_title }}」
+        </div>
+        <div class="card-body">{{ r.content }}</div>
+        <div class="card-footer">
+            <span>🕐 {{ r.cmt_time.strftime('%m-%d %H:%M') if r.cmt_time else '' }}</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">💬</div><div class="empty-text">还没有人回复你的帖子</div></div>
+    {% endif %}
+</div>
+
+<!-- 收到的赞 -->
+<div id="recvLikeTab" class="tab-panel" style="display:none;">
+    {% if received_likes %}
+    {% for l in received_likes %}
+    <div class="card" data-post-id="{{ l.post_id }}">
+        <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+            <span style="font-weight:600;font-size:14px;">{{ l.liker }}</span>
+            <span style="font-size:12px;color:var(--text-tertiary);">赞了你的帖子</span>
+        </div>
+        <div class="card-title" style="font-size:13px;color:var(--text-secondary);padding-right:0;">
+            「{{ l.post_title }}」
+        </div>
+        <div class="card-footer">
+            <span>🕐 {{ l.like_time.strftime('%m-%d %H:%M') if l.like_time else '' }}</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">👍</div><div class="empty-text">还没有人赞你的帖子</div></div>
+    {% endif %}
+</div>
+
+<!-- 我的点赞 -->
+<div id="myLikeTab" class="tab-panel" style="display:none;">
+    {% if my_likes %}
+    {% for l in my_likes %}
+    <div class="card" data-post-id="{{ l.post_id }}">
+        <div class="card-title" style="font-size:14px;">{{ l.title }}</div>
+        <div class="card-body">{{ l.content[:100] if l.content else '' }}</div>
+        <div class="card-footer">
+            <span>📁 {{ l.section_name }}</span>
+            <span>👤 {{ l.nickname }}</span>
+            <span>🕐 {{ l.like_time.strftime('%m-%d %H:%M') if l.like_time else '' }}</span>
+        </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">❤️</div><div class="empty-text">还没有点过赞</div></div>
+    {% endif %}
+</div>
+
+<!-- 我的码住 -->
+<div id="favTab" class="tab-panel" style="display:none;">
+    {% if my_favs %}
+    {% for p in my_favs %}
+    <div class="card" data-post-id="{{ p.post_id }}">
+        <div class="card-title">{{ p.title }}</div>
+        <div class="card-body">{{ p.content[:100] if p.content else '' }}</div>
+        <div class="card-footer">
+            <span>📁 {{ p.section_name }}</span>
+            <span>👤 {{ p.nickname }}</span>
+            <span>⭐ {{ p.fav_time.strftime('%m-%d %H:%M') if p.fav_time else '' }}</span>
+        </div>
+        <button class="btn btn-xs btn-secondary" onclick="unfavMsg({{ p.post_id }}, this)" style="margin-top:8px;">取消码住</button>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">⭐</div><div class="empty-text">还没有码住帖子</div></div>
+    {% endif %}
+</div>
+
+<!-- 举报反馈 -->
+<div id="rptTab" class="tab-panel" style="display:none;">
+    {% if report_feedback %}
+    {% for r in report_feedback %}
+    <div class="card" data-post-id="{{ r.post_id }}" style="cursor:default;">
+        <div class="card-title" style="font-size:14px;">举报反馈：{{ r.post_title }}</div>
+        <div class="card-body">
+            状态：<b>{{ r.status }}</b> · 时间：{{ r.handle_time.strftime('%Y-%m-%d %H:%M') if r.handle_time else '' }}<br>
+            {% if r.handle_note %}{{ r.handle_note }}{% endif %}
+        </div>
+        <a href="{{ url_for('post_detail', post_id=r.post_id) }}" data-spa style="font-size:12px;">查看帖子 →</a>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div class="empty-state"><div class="empty-icon">🚩</div><div class="empty-text">暂无举报反馈</div></div>
+    {% endif %}
+</div>
+{% endblock %}

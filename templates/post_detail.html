@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}{{ post.title }}{% endblock %}
+
+{% block content %}
+<div class="post-detail">
+    <a href="javascript:history.back()" style="font-size:13px;color:var(--text-tertiary);margin-bottom:16px;display:inline-block;">← 返回</a>
+
+    <h1 class="post-full-title">{{ post.title }}
+        {% if post.status == '已结束' %}<span class="status-tag status-ended">已结束</span>{% endif %}
+    </h1>
+
+    <div class="author-bar">
+        {% if post.avatar %}
+        <img src="{{ post.avatar }}" style="width:44px;height:44px;border-radius:50%;object-fit:cover;">
+        {% else %}
+        <div class="author-avatar" style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;color:#fff;font-size:20px;">👤</div>
+        {% endif %}
+        <div>
+            <div class="author-name">{{ post.nickname }}</div>
+            <div class="author-info">{{ post.school or '武汉理工大学' }} · {{ post.level }} · {{ post.exp }}XP</div>
+        </div>
+    </div>
+
+    <div class="post-full-content">{{ post.content }}</div>
+
+    <div class="card-footer" style="margin-bottom:16px;">
+        <span>📁 {{ post.section_name }}</span>
+        <span>🕐 {{ post.pub_time.strftime('%Y-%m-%d %H:%M') if post.pub_time else '' }}</span>
+        <span>👁 {{ post.view_count }}</span>
+        <span id="likeCount">👍 {{ post.like_count }}</span>
+        <span>💬 {{ post.comment_count }}</span>
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-sm {{ 'btn-primary' if not liked else 'btn-secondary' }}" id="likeBtn" onclick="toggleLike({{ post.post_id }})">
+            {{ '❤️ 已点赞' if liked else '🤍 点赞' }}
+        </button>
+        <button class="btn btn-sm {{ 'btn-primary' if not favorited else 'btn-secondary' }}" id="favBtn" onclick="toggleFav({{ post.post_id }})">
+            {{ '⭐ 已码住' if favorited else '☆ 码住' }}
+        </button>
+        <button class="btn btn-sm btn-secondary" onclick="reportPost({{ post.post_id }})">🚩 举报</button>
+    </div>
+
+    <div id="actionMsg" style="margin-top:8px;font-size:12px;"></div>
+
+    <!-- 红包分配区（仅红包帖且发帖者可见） -->
+    {% if post.red_amount and post.red_amount > 0 %}
+    <div class="divider"></div>
+    <div class="form-card">
+        <div class="form-section-title">🧧 红包分配
+            <span style="font-weight:400;font-size:13px;color:var(--text-tertiary);margin-left:8px;">
+                总额 ¥{{ "%.0f"|format(post.red_amount) }} · 剩余 ¥{{ "%.0f"|format(post.red_remaining or 0) }}
+            </span>
+        </div>
+
+        {% if post.status == '已结束' %}
+        <p style="color:var(--text-tertiary);font-size:13px;">该帖已结束</p>
+        {% elif current_user and current_user.user_id == post.author_id %}
+        <form method="POST" action="{{ url_for('distribute_red', post_id=post.post_id) }}">
+            <div class="form-group">
+                <label class="form-label">选择评论区用户</label>
+                <select name="to_user_id" class="form-select" style="max-width:360px;" required>
+                    <option value="">-- 选择用户 --</option>
+                    {% for c in comments %}
+                    {% if c.user_id != post.author_id %}
+                    <option value="{{ c.user_id }}">{{ c.nickname }} ({{ c.user_id }})</option>
+                    {% endif %}
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">分配金额（元）</label>
+                <input type="number" name="amount" class="form-input" style="max-width:160px;"
+                       min="1" max="{{ (post.red_remaining or 0)|int }}" step="1" required>
+            </div>
+            <button type="submit" class="btn btn-primary">🎁 分配红包</button>
+        </form>
+        {% else %}
+        <p style="color:var(--text-tertiary);font-size:13px;">仅发帖者可分配红包</p>
+        {% endif %}
+
+        <!-- 分配记录 -->
+        {% if distributions %}
+        <div style="margin-top:14px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-secondary);margin-bottom:8px;">分配记录</div>
+            {% for d in distributions %}
+            <div style="font-size:12px;color:var(--text-tertiary);padding:4px 0;">
+                🎁 {{ d.nickname }} 获得 ¥{{ "%.0f"|format(d.amount) }} · {{ d.dist_time.strftime('%m-%d %H:%M') if d.dist_time else '' }}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <!-- 结束帖子（发帖者或管理员可见） -->
+    {% if current_user and (current_user.user_id == post.author_id or current_user.role == '管理员') and post.status != '已结束' %}
+    <div style="margin-top:14px;display:flex;gap:8px;">
+        <form method="POST" action="/post/{{ post.post_id }}/end" onsubmit="return confirm('确定结束该帖子吗？')">
+            <button type="submit" class="btn btn-sm btn-secondary">🔒 结束帖子</button>
+        </form>
+        <form method="POST" action="/post/{{ post.post_id }}/delete" onsubmit="return confirm('确定删除该帖子吗？不可恢复！')">
+            <button type="submit" class="btn btn-sm btn-danger">🗑️ 删除帖子</button>
+        </form>
+    </div>
+    {% endif %}
+
+    <div class="divider"></div>
+    <div class="comment-list">
+        <h3>💬 评论 ({{ comments|length }})</h3>
+        {% if comments %}
+        {% for c in comments %}
+        <div class="comment-item">
+            <div class="cmt-header">
+                <span class="cmt-author">{{ c.nickname }}</span>
+                <span class="cmt-time">{{ c.cmt_time.strftime('%m-%d %H:%M') if c.cmt_time else '' }}</span>
+            </div>
+            <div class="cmt-body">{{ c.content }}</div>
+        </div>
+        {% endfor %}
+        {% else %}
+        <div class="empty-state" style="padding:16px;"><div class="empty-text">暂无评论</div></div>
+        {% endif %}
+        <form method="POST" action="{{ url_for('add_comment', post_id=post.post_id) }}" style="margin-top:16px;">
+            <div class="form-group">
+                <textarea name="content" class="form-textarea" placeholder="写下你的评论..." rows="2" required></textarea>
+            </div>
+            <button type="submit" class="btn btn-primary btn-sm">💬 发表评论</button>
+        </form>
+    </div>
+</div>
+
+{% endblock %}

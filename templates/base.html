@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>校园集市 - {% block title %}首页{% endblock %}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+<div class="app">
+    <aside class="sidebar">
+        <div class="sidebar-brand">
+            <div class="logo">
+                <div class="logo-icon">🏫</div>
+                <span>校园集市</span>
+            </div>
+            <div class="subtitle">Campus Market</div>
+        </div>
+        <nav class="sidebar-nav">
+            {% set nav = [
+                ('home', '🏠', '主页'),
+                ('index', '📌', '最新'),
+                ('browse', '📂', '浏览'),
+                ('create_post', '✏️', '发帖'),
+                ('messages', '💬', '消息'),
+                ('profile', '👤', '我的'),
+            ] %}
+            {% for route, icon, label in nav %}
+            <a href="{{ url_for(route) }}" data-spa
+               class="{% if request.endpoint == route %}active{% endif %}">
+                <span class="nav-icon">{{ icon }}</span>
+                <span>{{ label }}</span>
+            </a>
+            {% endfor %}
+            {% if current_user and current_user.role == '管理员' %}
+            <a href="/admin/reports" data-spa
+               class="{% if request.endpoint == 'admin_reports' %}active{% endif %}">
+                <span class="nav-icon">🛡️</span>
+                <span>举报管理</span>
+            </a>
+            {% endif %}
+        </nav>
+
+        <button class="theme-toggle" onclick="toggleTheme()">
+            <span style="font-size:16px;">🌓</span> 切换主题
+        </button>
+
+        {% if current_user %}
+        <div class="user-mini">
+            <div class="avatar">👤</div>
+            <div class="info">
+                <div class="name">{{ current_user.nickname }}</div>
+                <div class="id">{{ current_user.user_id }}</div>
+            </div>
+            <a href="{{ url_for('logout') }}" class="logout">退出</a>
+        </div>
+        {% endif %}
+
+        <div class="sidebar-footer">
+            Flask + MySQL 8.0 · 校园集市 Demo
+        </div>
+    </aside>
+
+    <main class="main" id="main-content">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="alert alert-{{ cat }}">{{ msg }}</div>
+        {% endfor %}
+        {% endwith %}
+        {% block content %}{% endblock %}
+    </main>
+</div>
+<script src="{{ url_for('static', filename='app.js') }}"></script>
+</body>
+</html>

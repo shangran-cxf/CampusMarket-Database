@@ -1,0 +1,58 @@
+{% extends "base.html" %}
+{% block title %}浏览{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📂 浏览</h2>
+    <p class="subtitle">{{ current_sec.name }} · {{ desc_map.get(current_sec.name, '') }}</p>
+</div>
+
+<div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:12px;margin-bottom:20px;">
+    <div class="section-tabs" style="margin-bottom:0;">
+        {% for s in sections %}
+        <span class="section-tab {% if s.sec_id == current_sec_id %}active{% endif %}" data-sec-id="{{ s.sec_id }}">
+            {{ s.name }}
+        </span>
+        {% endfor %}
+    </div>
+    <div style="display:flex;gap:6px;align-items:center;">
+        <form style="display:flex;gap:6px;" onsubmit="event.preventDefault();var q=this.q.value;if(q)navigateTo('/browse?type=keyword&q='+encodeURIComponent(q))">
+            <input type="text" name="q" class="form-input" placeholder="搜索..." value="{{ keyword or '' }}" style="width:180px;padding:7px 12px;font-size:13px;">
+            <button type="submit" class="btn btn-sm btn-primary">🔍</button>
+        </form>
+    </div>
+</div>
+
+{% if search_active %}
+<p class="search-result-count">搜索到 <b>{{ posts|length }}</b> 条结果</p>
+{% endif %}
+
+{% if not search_active %}
+<div class="stat-grid">
+    <div class="stat-card"><div class="stat-icon blue">📄</div><div><div class="stat-value">{{ stats.total }}</div><div class="stat-label">帖子数</div></div></div>
+    <div class="stat-card"><div class="stat-icon green">👁</div><div><div class="stat-value">{{ stats.views }}</div><div class="stat-label">总浏览</div></div></div>
+    <div class="stat-card"><div class="stat-icon orange">👍</div><div><div class="stat-value">{{ stats.likes }}</div><div class="stat-label">总点赞</div></div></div>
+    <div class="stat-card"><div class="stat-icon red">💬</div><div><div class="stat-value">{{ stats.comments }}</div><div class="stat-label">总评论</div></div></div>
+</div>
+{% endif %}
+
+{% if posts %}
+{% for p in posts %}
+<div class="card {% if current_sec_id == 2 %}red-card{% endif %}" data-post-id="{{ p.post_id }}">
+    <div class="card-title">{{ p.title }}{% if p.status == '已结束' %}<span class="status-tag status-ended">已结束</span>{% endif %}</div>
+    {% if p.content %}<div class="card-body">{{ p.content }}</div>{% endif %}
+    <div class="card-footer">
+        {% if search_active %}<span>📁 {{ p.section_name }}</span>{% endif %}
+        <span>👤 {{ p.nickname }}</span>
+        <span>👁 {{ p.view_count }}</span>
+        <span>🔥 {{ "%.1f"|format(p.hot_score or 0) }}</span>
+        <span>👍 {{ p.like_count }}</span>
+        <span>💬 {{ p.comment_count }}</span>
+        <span>🕐 {{ p.pub_time.strftime('%m-%d %H:%M') if p.pub_time else '' }}</span>
+    </div>
+</div>
+{% endfor %}
+{% else %}
+<div class="empty-state"><div class="empty-icon">📭</div><div class="empty-text">{% if search_active %}未找到结果{% else %}暂无帖子{% endif %}</div></div>
+{% endif %}
+{% endblock %}

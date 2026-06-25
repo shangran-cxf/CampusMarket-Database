@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}最新{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📌 最新动态</h2>
+    <p class="subtitle">红包帖优先 · 实时更新</p>
+</div>
+
+{% if red_posts or normal_posts %}
+<div class="card-grid">
+    <div>
+        <div class="section-header red">🧧 红包帖</div>
+        {% for p in red_posts %}
+        <div class="card red-card" data-post-id="{{ p.post_id }}">
+            <div class="card-title">{{ p.title }}</div>
+            <div class="card-body">{{ p.content or '' }}</div>
+            <div class="card-footer">
+                <span>👤 {{ p.nickname }}</span>
+                <span>👁 {{ p.view_count }}</span>
+                <span>🔥 {{ "%.1f"|format(p.hot_score or 0) }}</span>
+                <span>👍 {{ p.like_count }}</span>
+                <span>💬 {{ p.comment_count }}</span>
+                <span>🕐 {{ p.pub_time.strftime('%m-%d %H:%M') if p.pub_time else '' }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:16px;"><div class="empty-text">暂无红包帖</div></div>
+        {% endfor %}
+    </div>
+
+    <div>
+        <div class="section-header default">📋 最新发布</div>
+        {% for p in normal_posts %}
+        <div class="card" data-post-id="{{ p.post_id }}">
+            <div class="card-title">{{ p.title }}</div>
+            <div class="card-body">{{ p.content or '' }}</div>
+            <div class="card-footer">
+                <span>📁 {{ p.section_name }}</span>
+                <span>👤 {{ p.nickname }}</span>
+                <span>👁 {{ p.view_count }}</span>
+                <span>🔥 {{ "%.1f"|format(p.hot_score or 0) }}</span>
+                <span>👍 {{ p.like_count }}</span>
+                <span>💬 {{ p.comment_count }}</span>
+                <span>🕐 {{ p.pub_time.strftime('%m-%d %H:%M') if p.pub_time else '' }}</span>
+            </div>
+        </div>
+        {% else %}
+        <div class="empty-state" style="padding:16px;"><div class="empty-text">暂无新帖</div></div>
+        {% endfor %}
+    </div>
+</div>
+{% else %}
+<div class="empty-state">
+    <div class="empty-icon">📭</div>
+    <div class="empty-text">还没有任何帖子，快去<a href="{{ url_for('create_post') }}" data-spa>发布</a>吧</div>
+</div>
+{% endif %}
+{% endblock %}
